@@ -1,0 +1,36 @@
+{
+  "name": "@codescriptum/esbuild-plugin-emit-declaration",
+  "version": "1.0.0",
+  "description": "esbuild plugin for generating typescript declaration files",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "packageManager": "^pnpm@7.5.1",
+  "scripts": {
+    "dev": "node build.mjs --watch",
+    "build": "node build.mjs --prod && tsc --emitDeclarationOnly",
+    "test": "vitest --dir tests/unit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "esbuild": "^0.14.49",
+    "esbuild-plugin-node-externals": "^0.3.0",
+    "minimist": "^1.2.6",
+    "tmp-promise": "^3.0.3",
+    "typescript": "^4.7.4",
+    "vitest": "^0.20.2"
+  },
+  "peerDependencies": {
+    "esbuild": "^0.14.49",
+    "typescript": "^4.7.4"
+  },
+  "repository": "https://github.com/codescriptum/esbuild-plugin-emit-declaration",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
+}

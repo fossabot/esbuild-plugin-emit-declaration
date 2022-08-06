@@ -1,0 +1,152 @@
+name: Build & Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7.6.0
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'pnpm'
+
+      - name: Install dependecies
+        run: pnpm install
+
+      - name: Audit dependencies
+        uses: mathiasvr/command-output@v1.1.0
+        id: audit
+        continue-on-error: true
+        with:
+          run: pnpm audit --audit-level high
+
+      - name: Build
+        uses: mathiasvr/command-output@v1.1.0
+        id: build
+        continue-on-error: true
+        with:
+          run: pnpm build
+
+      - name: Comment pull request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `
+            #### Build Job Result
+
+            |   |   |
+            |---|---|
+            | 🔎 Dependecies audit | \`${{ steps.audit.outcome }}\` |
+            | ⚙️ Build | \`${{ steps.build.outcome }}\` |
+            |   |   |
+
+            </br>
+            <details><summary>Show audit</summary>
+
+            \`\`\`
+            ${{ steps.audit.outputs.stdout }}
+            \`\`\`
+
+            </details></br>
+
+            <details><summary>Show Build</summary>
+
+            \`\`\`
+            ${{ steps.build.outputs.stdout }}
+            \`\`\`
+
+            </details></br>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Audit & Build Status
+        if: steps.audit.outcome == 'failure' || steps.build.outcome == 'failure'
+        run: exit 1
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7.6.0
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'pnpm'
+
+      - name: Install dependecies
+        run: pnpm install
+
+      - name: Unit Tests
+        uses: mathiasvr/command-output@v1.1.0
+        id: unit
+        continue-on-error: true
+        env:
+          CI: 'true'
+          NO_COLOR: 'true'
+        with:
+          run: pnpm test
+
+      - name: Comment pull request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `
+            #### Test Job Result
+
+            |   |   |
+            |---|---|
+            | 🧪 Unit Tests | \`${{ steps.unit.outcome }}\` |
+            |   |   |
+
+            </br>
+            <details><summary>Show Unit Tests</summary>
+
+            \`\`\`
+            ${{ steps.unit.outputs.stdout }}
+            \`\`\`
+
+            </details></br>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Unit Tests Status
+        if: steps.unit.outcome == 'failure'
+        run: exit 1

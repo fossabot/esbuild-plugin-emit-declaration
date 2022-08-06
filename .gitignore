@@ -1,0 +1,8 @@
+# IDE file
+.idea
+
+# dependencies
+node_modules
+
+# distribution files
+dist
